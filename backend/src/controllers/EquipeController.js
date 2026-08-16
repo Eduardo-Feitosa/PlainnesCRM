@@ -1,6 +1,7 @@
 const modeloEquipe = require('../models/Equipe');
 const modeloEquipeMembro = require('../models/EquipeMembro');
 const modeloUsuario = require('../models/Usuario');
+const modeloColaborador = require('../models/Colaborador');
 const modeloNotificacao = require('../models/Notificacao');
 const Joi = require('joi');
 
@@ -306,7 +307,9 @@ const buscarUsuarios = async (req, res) =>
         const termo = String(req.query.termo || '').trim();
         if (!termo) return res.json([]);
 
-        const candidatos = await modeloUsuario.buscarParaConvite(termo, req.usuario.id);
+        // Só pode adicionar à equipe quem já é colaborador aceito do criador —
+        // não é mais uma busca geral de usuários do sistema.
+        const candidatos = await modeloColaborador.buscarAceitosPorTermo(req.usuario.id, termo);
         const vinculos = await modeloEquipeMembro.listarPorEquipe(id);
         const idsVinculados = new Set(vinculos.map((v) => v.usuarioId));
 

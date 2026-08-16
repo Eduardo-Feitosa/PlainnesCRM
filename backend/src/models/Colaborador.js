@@ -117,6 +117,29 @@ const modeloColaborador =
         );
         return resultado.affectedRows > 0;
     },
+
+    // Busca, ENTRE OS COLABORADORES JÁ ACEITOS do usuário logado, quem bate com
+    // o termo digitado (nome, nomeUser ou código exato) — usado na busca de
+    // "adicionar membro" da equipe, que só pode oferecer quem já é colaborador.
+    // Diferente de Usuario.buscarParaConvite, aqui não existe restrição de
+    // perfil público/privado: os dois já se conhecem, então nome sempre busca.
+    buscarAceitosPorTermo: async (usuarioId, termo) =>
+    {
+        const termoLike = `%${termo}%`;
+        const codigoNumerico = /^\d{1,10}$/.test(termo) ? Number(termo) : null;
+
+        const [linhas] = await conexao.query(
+            `SELECT u.id, u.nome, u.nomeUser, u.codigo, u.funcao, u.tipoPerfil
+             FROM colaborador c
+             INNER JOIN usuario u ON u.id = IF(c.usuarioId = ?, c.colaboradorId, c.usuarioId)
+             WHERE (c.usuarioId = ? OR c.colaboradorId = ?) AND c.status = 'aceito'
+               AND (u.nome LIKE ? OR u.nomeUser LIKE ? OR u.codigo = ?)
+             ORDER BY u.nome ASC
+             LIMIT 10`,
+            [usuarioId, usuarioId, usuarioId, termoLike, termoLike, codigoNumerico]
+        );
+        return linhas;
+    },
 };
 
 module.exports = modeloColaborador;
