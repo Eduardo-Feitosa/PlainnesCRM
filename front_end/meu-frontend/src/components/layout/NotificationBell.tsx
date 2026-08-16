@@ -291,8 +291,10 @@ export const NotificationBell: React.FC = () =>
         try
         {
             await responderConvite(convite.equipeId, aceitar);
-            setConvites((prev) => prev.filter((c) => c.equipeId !== convite.equipeId));
-            await atualizarContagem();
+            // Recarrega tudo (não só filtra localmente): responder também marca a
+            // notificação original como lida no backend, e precisamos refletir isso
+            // na aba "Atividade recente" sem esperar um reload de página.
+            await Promise.all([carregarLista(), atualizarContagem()]);
         }
         catch (err)
         {
@@ -310,8 +312,7 @@ export const NotificationBell: React.FC = () =>
         try
         {
             await responderSolicitacao(solicitacao.id, aceitar);
-            setSolicitacoes((prev) => prev.filter((s) => s.id !== solicitacao.id));
-            await atualizarContagem();
+            await Promise.all([carregarLista(), atualizarContagem()]);
         }
         catch (err)
         {

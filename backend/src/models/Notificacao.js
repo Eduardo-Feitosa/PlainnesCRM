@@ -42,6 +42,18 @@ const modeloNotificacao =
         );
         return resultado.affectedRows > 0;
     },
+
+    // Marca como lida a(s) notificação(ões) de um evento específico assim que o
+    // usuário responde a ele (convite/solicitação) — evita que o aviso "fulano
+    // te convidou" continue contando no sino depois que já foi resolvido.
+    marcarComoLidaPorReferencia: async (usuarioId, tipo, referenciaId) =>
+    {
+        const [resultado] = await conexao.query(
+            'UPDATE notificacao SET lida = 1 WHERE usuarioId = ? AND tipo = ? AND referenciaId = ? AND lida = 0',
+            [usuarioId, tipo, referenciaId]
+        );
+        return resultado.affectedRows > 0;
+    },
 };
 
 module.exports = modeloNotificacao;

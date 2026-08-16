@@ -500,6 +500,18 @@ const responderConvite = async (req, res) =>
             return res.status(400).json({ erro: 'Convite não encontrado ou já respondido.' });
         }
 
+        // Quem está respondendo é o convidado — marca como lida a notificação
+        // "fulano te convidou pra equipe" que ele recebeu, senão ela fica
+        // contando no sino pra sempre mesmo depois de já resolvida.
+        try
+        {
+            await modeloNotificacao.marcarComoLidaPorReferencia(req.usuario.id, TIPO_NOTIFICACAO.CONVITE_EQUIPE, id);
+        }
+        catch (erroNotificacao)
+        {
+            console.error('⚠️ falha ao marcar notificação original de convite como lida:', erroNotificacao);
+        }
+
         const mensagem = aceitar
             ? `${req.usuario.nome} aceitou seu convite para a equipe "${equipe.nome}".`
             : `${req.usuario.nome} recusou seu convite para a equipe "${equipe.nome}".`;

@@ -83,26 +83,30 @@ const solicitar = async (req, res) =>
             return res.status(400).json({ erro: 'Vocês já são colaboradores.' });
         }
 
+        let idColaborador;
         if (vinculo)
         {
             // já existiu e foi recusada — reenvia, respeitando quem é o solicitante desta vez
             await modeloColaborador.reenviarComoNovoSolicitante(vinculo.id, req.usuario.id, usuarioId);
+            idColaborador = vinculo.id;
         }
         else
         {
-            await modeloColaborador.inserir(req.usuario.id, usuarioId, STATUS_COLABORADOR.PENDENTE);
+            idColaborador = await modeloColaborador.inserir(req.usuario.id, usuarioId, STATUS_COLABORADOR.PENDENTE);
         }
 
         try
         {
             // Isolado de propósito: a solicitação (tabela colaborador) já foi salva
             // acima — se só a notificação falhar, isso não pode virar erro 500.
+            // referenciaId = id da linha em `colaborador`, usado depois em responder()
+            // pra marcar essa notificação como lida assim que o pedido for respondido.
             await modeloNotificacao.criar(null, {
                 usuarioId,
                 tipo: TIPO_NOTIFICACAO.SOLICITACAO_COLABORADOR,
                 mensagem: `${req.usuario.nome} enviou uma solicitação de colaboração.`,
                 link: null,
-                referenciaId: null,
+                referenciaId: idColaborador,
             });
         }
         catch (erroNotificacao)
@@ -165,6 +169,18 @@ const responder = async (req, res) =>
         const respondeu = await modeloColaborador.responder(id, req.usuario.id, novoStatus);
         if (!respondeu) return res.status(400).json({ erro: 'Esta solicitação já foi respondida.' });
 
+        // Quem está respondendo é o destinatário original — marca como lida a
+        // notificação "fulano enviou uma solicitação" que ele recebeu, senão ela
+        // fica contando pro sempre no sino mesmo depois de já resolvida.
+        try
+        {
+            await modeloNotificacao.marcarComoLidaPorReferencia(req.usuario.id, TIPO_NOTIFICACAO.SOLICITACAO_COLABORADOR, id);
+        }
+        catch (erroNotificacao)
+        {
+            console.error('⚠️ falha ao marcar notificação original como lida:', erroNotificacao);
+        }
+
         const mensagem = aceitar
             ? `${req.usuario.nome} aceitou sua solicitação de colaboração.`
             : `${req.usuario.nome} recusou sua solicitação de colaboração.`;
@@ -173,7 +189,7 @@ const responder = async (req, res) =>
             // Isolado de propósito: a resposta (status em colaborador) já foi salva
             // acima — se só a notificação falhar, isso não pode virar erro 500.
             await modeloNotificacao.criar(null, {
-                usuarioId: vinculo.usuarioId, tipo: TIPO_NOTIFICACAO.SOLICITACAO_COLABORADOR, mensagem, link: null, referenciaId: null,
+                usuarioId: vinculo.usuarioId, tipo: TIPO_NOTIFICACAO.SOLICITACAO_COLABORADOR, mensagem, link: null, referenciaId: id,
             });
         }
         catch (erroNotificacao)
