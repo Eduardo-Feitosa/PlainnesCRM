@@ -5,17 +5,15 @@ const modeloNotificacao = require('../models/Notificacao');
 const Joi = require('joi');
 
 // ============================================
-// VALORES FIXOS (ENUM do banco)
-// ATENÇÃO: precisam bater exatamente com o ENUM criado em `equipemembro.status`
-// e `notificacao.tipo` no MySQL Workbench. Se o banco usar outras strings,
-// ajuste só aqui — o resto do controller usa essas constantes.
+// VALORES FIXOS (ENUM do banco) — conferidos via SHOW CREATE TABLE:
+// equipemembro.status = ENUM('pendente','ativo','recusado')
+// notificacao.tipo    = ENUM('convite_equipe','tarefa_atribuida','lead_dia','solicitacao_colaborador')
+// notificacao.tipo não tem valor específico pra "convite aceito/recusado", então
+// reaproveitamos CONVITE_EQUIPE pros 3 momentos (enviado/aceito/recusado),
+// diferenciando só pelo texto da mensagem.
 // ============================================
-const STATUS_MEMBRO = { PENDENTE: 'pendente', ACEITO: 'aceito', RECUSADO: 'recusado' };
-const TIPO_NOTIFICACAO = {
-    CONVITE_EQUIPE: 'convite_equipe',
-    CONVITE_ACEITO: 'convite_aceito',
-    CONVITE_RECUSADO: 'convite_recusado',
-};
+const STATUS_MEMBRO = { PENDENTE: 'pendente', ATIVO: 'ativo', RECUSADO: 'recusado' };
+const TIPO_NOTIFICACAO = { CONVITE_EQUIPE: 'convite_equipe' };
 
 // ============================================
 // HELPERS DE MENSAGEM PADRONIZADA (padrão cliente/produto/venda)
@@ -83,11 +81,11 @@ function parseErroJoi(joiError)
     return { status: 400, body: { erro: joiError.details[0].message } };
 }
 
-// Verifica se o usuário logado pode VER a equipe (criador ou membro aceito)
+// Verifica se o usuário logado pode VER a equipe (criador ou membro ativo)
 async function autorizadoParaVer(equipe, usuarioId)
 {
     if (equipe.criadoPor === usuarioId) return true;
-    return modeloEquipeMembro.souMembroAceito(equipe.id, usuarioId);
+    return modeloEquipeMembro.souMembroAtivo(equipe.id, usuarioId);
 }
 
 // ============================================
@@ -154,7 +152,7 @@ const criar = async (req, res) =>
         const idEquipe = await modeloEquipe.criar(conexaoTransacao, {
             nome, descricao, setor, objetivo, criadoPor: req.usuario.id,
         });
-        await modeloEquipeMembro.inserir(conexaoTransacao, idEquipe, req.usuario.id, STATUS_MEMBRO.ACEITO);
+        await modeloEquipeMembro.inserir(conexaoTransacao, idEquipe, req.usuario.id, STATUS_MEMBRO.ATIVO);
 
         await conexaoTransacao.commit();
         conexaoTransacao.release(); conexaoTransacao = null;
@@ -355,7 +353,7 @@ const convidar = async (req, res) =>
         {
             return res.status(400).json({ erro: 'Este usuário já tem um convite pendente para esta equipe.' });
         }
-        if (vinculo && vinculo.status === STATUS_MEMBRO.ACEITO)
+        if (vinculo && vinculo.status === STATUS_MEMBRO.ATIVO)
         {
             return res.status(400).json({ erro: 'Este usuário já é membro desta equipe.' });
         }
@@ -369,13 +367,22 @@ const convidar = async (req, res) =>
             await modeloEquipeMembro.inserir(null, id, usuarioId, STATUS_MEMBRO.PENDENTE);
         }
 
-        await modeloNotificacao.criar(null, {
-            usuarioId,
-            tipo: TIPO_NOTIFICACAO.CONVITE_EQUIPE,
-            mensagem: `${req.usuario.nome} convidou você para a equipe "${equipe.nome}".`,
-            link: '/equipes',
-            referenciaId: id,
-        });
+        try
+        {
+            // Isolado de propósito: o convite (equipemembro) já foi salvo acima —
+            // se só a notificação falhar, isso não pode virar erro 500 pro usuário.
+            await modeloNotificacao.criar(null, {
+                usuarioId,
+                tipo: TIPO_NOTIFICACAO.CONVITE_EQUIPE,
+                mensagem: `${req.usuario.nome} convidou você para a equipe "${equipe.nome}".`,
+                link: '/equipes',
+                referenciaId: id,
+            });
+        }
+        catch (erroNotificacao)
+        {
+            console.error('⚠️ falha ao criar notificação de convite (convite já foi salvo normalmente):', erroNotificacao);
+        }
 
         return res.status(201).json({ mensagem: 'Convite enviado com sucesso! O usuário precisa aceitar para entrar na equipe.' });
     }
@@ -486,20 +493,28 @@ const responderConvite = async (req, res) =>
         const equipe = await modeloEquipe.buscarPorId(id);
         if (!equipe) return res.status(404).json({ erro: 'Equipe não encontrada.' });
 
-        const novoStatus = aceitar ? STATUS_MEMBRO.ACEITO : STATUS_MEMBRO.RECUSADO;
+        const novoStatus = aceitar ? STATUS_MEMBRO.ATIVO : STATUS_MEMBRO.RECUSADO;
         const respondeu = await modeloEquipeMembro.responder(id, req.usuario.id, novoStatus);
         if (!respondeu)
         {
             return res.status(400).json({ erro: 'Convite não encontrado ou já respondido.' });
         }
 
-        const tipoNotif = aceitar ? TIPO_NOTIFICACAO.CONVITE_ACEITO : TIPO_NOTIFICACAO.CONVITE_RECUSADO;
         const mensagem = aceitar
             ? `${req.usuario.nome} aceitou seu convite para a equipe "${equipe.nome}".`
             : `${req.usuario.nome} recusou seu convite para a equipe "${equipe.nome}".`;
-        await modeloNotificacao.criar(null, {
-            usuarioId: equipe.criadoPor, tipo: tipoNotif, mensagem, link: '/equipes', referenciaId: id,
-        });
+        try
+        {
+            // Isolado de propósito: se a notificação falhar, a resposta ao convite
+            // (que já está salva) não pode virar erro 500 pro usuário.
+            await modeloNotificacao.criar(null, {
+                usuarioId: equipe.criadoPor, tipo: TIPO_NOTIFICACAO.CONVITE_EQUIPE, mensagem, link: '/equipes', referenciaId: id,
+            });
+        }
+        catch (erroNotificacao)
+        {
+            console.error('⚠️ falha ao criar notificação de resposta de convite (convite já foi respondido normalmente):', erroNotificacao);
+        }
 
         return res.json({ mensagem: aceitar ? 'Convite aceito! Você agora é membro da equipe.' : 'Convite recusado.' });
     }

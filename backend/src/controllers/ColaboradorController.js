@@ -4,17 +4,17 @@ const modeloNotificacao = require('../models/Notificacao');
 const Joi = require('joi');
 
 // ============================================
-// VALORES FIXOS (ENUM do banco)
-// ATENÇÃO: precisam bater exatamente com o ENUM criado em `colaborador.status`.
-// Mesma convenção usada em EquipeController — ajuste só aqui se o ENUM real
-// do banco usar outras strings.
+// VALORES FIXOS (ENUM do banco) — conferidos via SHOW CREATE TABLE:
+// colaborador.status = ENUM('pendente','aceito','recusado')
+// notificacao.tipo   = ENUM('convite_equipe','tarefa_atribuida','lead_dia','solicitacao_colaborador')
+// (o valor 'solicitacao_colaborador' precisou ser adicionado ao ENUM original
+// via ALTER TABLE — não existia nenhuma categoria pra colaborador antes)
+// notificacao.tipo não tem valor específico pra "aceito/recusado", então
+// reaproveitamos SOLICITACAO_COLABORADOR pros 3 momentos, diferenciando só
+// pelo texto da mensagem.
 // ============================================
 const STATUS_COLABORADOR = { PENDENTE: 'pendente', ACEITO: 'aceito', RECUSADO: 'recusado' };
-const TIPO_NOTIFICACAO = {
-    SOLICITACAO_COLABORADOR: 'solicitacao_colaborador',
-    COLABORADOR_ACEITO: 'colaborador_aceito',
-    COLABORADOR_RECUSADO: 'colaborador_recusado',
-};
+const TIPO_NOTIFICACAO = { SOLICITACAO_COLABORADOR: 'solicitacao_colaborador' };
 
 const esquemaSolicitar = Joi.object
 ({
@@ -93,13 +93,22 @@ const solicitar = async (req, res) =>
             await modeloColaborador.inserir(req.usuario.id, usuarioId, STATUS_COLABORADOR.PENDENTE);
         }
 
-        await modeloNotificacao.criar(null, {
-            usuarioId,
-            tipo: TIPO_NOTIFICACAO.SOLICITACAO_COLABORADOR,
-            mensagem: `${req.usuario.nome} enviou uma solicitação de colaboração.`,
-            link: null,
-            referenciaId: null,
-        });
+        try
+        {
+            // Isolado de propósito: a solicitação (tabela colaborador) já foi salva
+            // acima — se só a notificação falhar, isso não pode virar erro 500.
+            await modeloNotificacao.criar(null, {
+                usuarioId,
+                tipo: TIPO_NOTIFICACAO.SOLICITACAO_COLABORADOR,
+                mensagem: `${req.usuario.nome} enviou uma solicitação de colaboração.`,
+                link: null,
+                referenciaId: null,
+            });
+        }
+        catch (erroNotificacao)
+        {
+            console.error('⚠️ falha ao criar notificação de solicitação de colaboração (solicitação já foi salva normalmente):', erroNotificacao);
+        }
 
         return res.status(201).json({ mensagem: 'Solicitação enviada com sucesso!' });
     }
@@ -156,13 +165,21 @@ const responder = async (req, res) =>
         const respondeu = await modeloColaborador.responder(id, req.usuario.id, novoStatus);
         if (!respondeu) return res.status(400).json({ erro: 'Esta solicitação já foi respondida.' });
 
-        const tipoNotif = aceitar ? TIPO_NOTIFICACAO.COLABORADOR_ACEITO : TIPO_NOTIFICACAO.COLABORADOR_RECUSADO;
         const mensagem = aceitar
             ? `${req.usuario.nome} aceitou sua solicitação de colaboração.`
             : `${req.usuario.nome} recusou sua solicitação de colaboração.`;
-        await modeloNotificacao.criar(null, {
-            usuarioId: vinculo.usuarioId, tipo: tipoNotif, mensagem, link: null, referenciaId: null,
-        });
+        try
+        {
+            // Isolado de propósito: a resposta (status em colaborador) já foi salva
+            // acima — se só a notificação falhar, isso não pode virar erro 500.
+            await modeloNotificacao.criar(null, {
+                usuarioId: vinculo.usuarioId, tipo: TIPO_NOTIFICACAO.SOLICITACAO_COLABORADOR, mensagem, link: null, referenciaId: null,
+            });
+        }
+        catch (erroNotificacao)
+        {
+            console.error('⚠️ falha ao criar notificação de resposta de colaboração (resposta já foi salva normalmente):', erroNotificacao);
+        }
 
         return res.json({ mensagem: aceitar ? 'Solicitação aceita! Vocês agora são colaboradores.' : 'Solicitação recusada.' });
     }

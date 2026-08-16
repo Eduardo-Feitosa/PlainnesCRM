@@ -14,16 +14,16 @@ const normaliza = (valor) =>
 
 const modeloEquipe =
 {
-    // Lista as equipes onde o usuário logado é MEMBRO ACEITO (isso já cobre o
-    // criador, que vira membro aceito automaticamente na criação da equipe)
+    // Lista as equipes onde o usuário logado é MEMBRO ATIVO (isso já cobre o
+    // criador, que vira membro ativo automaticamente na criação da equipe)
     listarMinhas: async (usuarioId) =>
     {
         const [linhas] = await conexao.query(
             `SELECT e.*, (e.criadoPor = ?) AS souCriador,
-                    (SELECT COUNT(*) FROM equipemembro em2 WHERE em2.equipeId = e.id AND em2.status = 'aceito') AS totalMembros
+                    (SELECT COUNT(*) FROM equipemembro em2 WHERE em2.equipeId = e.id AND em2.status = 'ativo') AS totalMembros
              FROM equipe e
              INNER JOIN equipemembro em ON em.equipeId = e.id
-             WHERE em.usuarioId = ? AND em.status = 'aceito'
+             WHERE em.usuarioId = ? AND em.status = 'ativo'
              ORDER BY e.dataCriacao DESC`,
             [usuarioId, usuarioId]
         );

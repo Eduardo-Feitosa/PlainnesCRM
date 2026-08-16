@@ -203,13 +203,13 @@ const InviteCard = styled(ConfigCard)`
 // ============================================
 
 const statusTone: Record<StatusMembro, 'success' | 'warning' | 'danger'> = {
-    aceito: 'success',
+    ativo: 'success',
     pendente: 'warning',
     recusado: 'danger',
 };
 
 const statusLabel: Record<StatusMembro, string> = {
-    aceito: 'Ativo',
+    ativo: 'Ativo',
     pendente: 'Pendente',
     recusado: 'Recusado',
 };

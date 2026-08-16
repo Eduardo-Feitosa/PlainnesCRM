@@ -1,4 +1,4 @@
-export type TipoNotificacao = 'convite_equipe' | 'convite_aceito' | 'convite_recusado';
+export type TipoNotificacao = 'convite_equipe' | 'tarefa_atribuida' | 'lead_dia' | 'solicitacao_colaborador';
 
 export interface Notificacao
 {

@@ -1,4 +1,4 @@
-export type StatusMembro = 'pendente' | 'aceito' | 'recusado';
+export type StatusMembro = 'pendente' | 'ativo' | 'recusado';
 
 export interface Equipe
 {

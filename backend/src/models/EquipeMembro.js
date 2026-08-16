@@ -13,11 +13,11 @@ const modeloEquipeMembro =
         return linhas[0];
     },
 
-    // Cria um vínculo novo (convite pendente, ou o criador entrando já aceito)
+    // Cria um vínculo novo (convite pendente, ou o criador entrando já ativo)
     inserir: async (poolOrConexao, equipeId, usuarioId, status) =>
     {
         const conex = poolOrConexao || conexao;
-        const dataRespostaImediata = status === 'aceito' ? new Date() : null;
+        const dataRespostaImediata = status === 'ativo' ? new Date() : null;
         const [resultado] = await conex.query(
             `INSERT INTO equipemembro (equipeId, usuarioId, status, dataConvite, dataResposta)
              VALUES (?, ?, ?, NOW(), ?)`,
@@ -99,10 +99,10 @@ const modeloEquipeMembro =
         return resultado.affectedRows >= 0;
     },
 
-    souMembroAceito: async (equipeId, usuarioId) =>
+    souMembroAtivo: async (equipeId, usuarioId) =>
     {
         const [linhas] = await conexao.query(
-            `SELECT 1 FROM equipemembro WHERE equipeId = ? AND usuarioId = ? AND status = 'aceito' LIMIT 1`,
+            `SELECT 1 FROM equipemembro WHERE equipeId = ? AND usuarioId = ? AND status = 'ativo' LIMIT 1`,
             [equipeId, usuarioId]
         );
         return linhas.length > 0;
