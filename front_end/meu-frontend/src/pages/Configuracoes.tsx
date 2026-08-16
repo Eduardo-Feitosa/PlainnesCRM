@@ -245,6 +245,7 @@ const Configuracoes: React.FC = () =>
 
   // ====== ESTADOS DO PERFIL ======
   const [tipoPessoa, setTipoPessoa] = useState<'PF' | 'PJ'>('PF');
+  const [tipoPerfil, setTipoPerfil] = useState<'publico' | 'privado'>('privado');
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [telefone, setTelefone] = useState('');
@@ -295,7 +296,9 @@ const Configuracoes: React.FC = () =>
   {
     if (!usuario) return;
     const tipo: 'PF' | 'PJ' = usuario.tipo === 'PJ' ? 'PJ' : 'PF';
+    const perfil: 'publico' | 'privado' = usuario.tipoPerfil === 'publico' ? 'publico' : 'privado';
     setTipoPessoa(tipo);
+    setTipoPerfil(perfil);
     setNome(usuario.nome || '');
     setEmail(usuario.email || '');
     setTelefone(maskTelefone(usuario.telefone || ''));
@@ -311,6 +314,7 @@ const Configuracoes: React.FC = () =>
       nome: (usuario.nome || '').trim(),
       email: (usuario.email || '').trim(),
       tipo,
+      tipoPerfil: perfil,
       telefone: apenasDigitos(usuario.telefone || ''),
       setor: (usuario.setor || '').trim(),
       ...(tipo === 'PF'
@@ -351,6 +355,8 @@ const Configuracoes: React.FC = () =>
     if (!setor.trim()) err.setor = 'Setor é obrigatório';
     else if (setor.trim().length < 2) err.setor = 'Setor deve ter pelo menos 2 caracteres';
 
+    if (!tipoPerfil) err.tipoPerfil = 'Tipo de perfil é obrigatório';
+
     if (tipoPessoa === 'PF')
     {
       if (!cpf.trim()) err.cpf = 'CPF é obrigatório';
@@ -377,7 +383,9 @@ const Configuracoes: React.FC = () =>
   {
     if (!usuario) return;
     const tipo: 'PF' | 'PJ' = usuario.tipo === 'PJ' ? 'PJ' : 'PF';
+    const perfil: 'publico' | 'privado' = usuario.tipoPerfil === 'publico' ? 'publico' : 'privado';
     setTipoPessoa(tipo);
+    setTipoPerfil(perfil);
     setNome(usuario.nome || '');
     setEmail(usuario.email || '');
     setTelefone(maskTelefone(usuario.telefone || ''));
@@ -393,6 +401,7 @@ const Configuracoes: React.FC = () =>
       nome: (usuario.nome || '').trim(),
       email: (usuario.email || '').trim(),
       tipo,
+      tipoPerfil: perfil,
       telefone: apenasDigitos(usuario.telefone || ''),
       setor: (usuario.setor || '').trim(),
       ...(tipo === 'PF'
@@ -468,6 +477,7 @@ const Configuracoes: React.FC = () =>
       nome: nome.trim(),
       email: email.trim(),
       tipo: tipoPessoa,
+      tipoPerfil,
       telefone: apenasDigitos(telefone),
       setor: setor.trim(),
       ...(tipoPessoa === 'PF'
@@ -734,6 +744,19 @@ const Configuracoes: React.FC = () =>
                 />
               </Row>
             )}
+
+            <Row>
+              <FormSelect
+                label="Tipo de perfil"
+                name="tipoPerfil"
+                value={tipoPerfil}
+                onChange={(e) => setTipoPerfil(e.target.value as 'publico' | 'privado')}
+                options={[
+                  { value: 'publico', label: 'Público' },
+                  { value: 'privado', label: 'Privado' },
+                ]}
+              />
+            </Row>
 
             <ButtonsRow>
               <SubmitButton type="submit" disabled={salvandoPerfil}>

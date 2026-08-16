@@ -150,6 +150,7 @@ const StyledSelect = styled.select`
   border: none;
   border-radius: 12px;
   font-size: 16px;
+  font-weight: 600;
   font-family: 'Inter', sans-serif;
   box-sizing: border-box;
   outline: none;
@@ -249,7 +250,9 @@ const Cadastro = () =>
   const navigate = useNavigate();
 
   const [tipoPessoa, setTipoPessoa] = useState<'PF' | 'PJ'>('PF');
+  const [tipoPerfil, setTipoPerfil] = useState<'publico' | 'privado' | ''>('');
   const [nome, setNome] = useState('');
+  const [nomeUser, setNomeUser] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [cpf, setCpf] = useState('');
@@ -342,6 +345,9 @@ const Cadastro = () =>
     if (!nome.trim()) novosErros.nome = 'Nome completo / Razão social é obrigatório';
     else if (nome.trim().length < 3) novosErros.nome = 'Nome deve ter pelo menos 3 caracteres';
 
+    if (!nomeUser.trim()) novosErros.nomeUser = 'Nome de usuário é obrigatório';
+    else if (nomeUser.length > 15) novosErros.nomeUser = 'Nome de usuário deve ter no máximo 15 caracteres';
+
     if (!email.trim()) novosErros.email = 'Email é obrigatório';
     else if (!/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i.test(email)) 
     {
@@ -385,6 +391,9 @@ const Cadastro = () =>
     if (!setor.trim()) novosErros.setor = 'Setor é obrigatório';
     else if (setor.trim().length < 2) novosErros.setor = 'Setor deve ter pelo menos 2 caracteres';
 
+    // Tipo de Perfil (comum)
+    if (!tipoPerfil) novosErros.tipoPerfil = 'Tipo de perfil é obrigatório';
+
     setErrors(novosErros);
     return Object.keys(novosErros).length === 0;
   };
@@ -402,9 +411,11 @@ const handleSubmit = async (e: React.FormEvent) =>
   const dados = 
   {
     nome: nome.trim(),
+    nomeUser: nomeUser.trim(),
     email: email.trim(),
     senha,
     tipo: tipoPessoa,
+    tipoPerfil,
     telefone: telefone.replace(/\D/g, ''),
     setor: setor.trim(),
     ...(tipoPessoa === 'PF'
@@ -495,9 +506,20 @@ const handleSubmit = async (e: React.FormEvent) =>
           </FieldGroup>
         </Row>
 
-        {/* Senha */}
+        {/* Nome de Usuário e Senha */}
         <Row>
-          <FullWidthGroup>
+          <FieldGroup>
+            <StyledInput
+              type="text"
+              placeholder="Nome de usuário"
+              maxLength={15}
+              value={nomeUser}
+              onChange={(e) => setNomeUser(e.target.value)}
+              $hasError={!!errors.nomeUser}
+            />
+            {errors.nomeUser && <ErrorText>{errors.nomeUser}</ErrorText>}
+          </FieldGroup>
+          <FieldGroup>
             <StyledInput
               type="password"
               placeholder="Senha"
@@ -507,7 +529,7 @@ const handleSubmit = async (e: React.FormEvent) =>
               $hasError={!!errors.senha}
             />
             {errors.senha && <ErrorText>{errors.senha}</ErrorText>}
-          </FullWidthGroup>
+          </FieldGroup>
         </Row>
 
         {/* Tipo de Pessoa */}
@@ -520,6 +542,31 @@ const handleSubmit = async (e: React.FormEvent) =>
               <option value="PF">Pessoa Física</option>
               <option value="PJ">Empresa</option>
             </StyledSelect>
+          </FullWidthGroup>
+        </Row>
+
+        {/* Tipo de Perfil */}
+        <Row>
+          <FullWidthGroup>
+            <StyledSelect
+              value={tipoPerfil}
+              onChange={(e) => setTipoPerfil(e.target.value as 'publico' | 'privado')}
+            >
+              <option value="" disabled hidden>Tipo de perfil *</option>
+              <option value="publico">Público</option>
+              <option value="privado">Privado</option>
+            </StyledSelect>
+            {errors.tipoPerfil && <ErrorText>{errors.tipoPerfil}</ErrorText>}
+            {tipoPerfil === 'publico' && (
+              <ErrorText style={{ color: '#555555', marginTop: '6px', fontSize: '12px' }}>
+                Perfil público: qualquer membro poderá te encontrar e adicionar ao time sem precisar de código.
+              </ErrorText>
+            )}
+            {tipoPerfil === 'privado' && (
+              <ErrorText style={{ color: '#555555', marginTop: '6px', fontSize: '12px' }}>
+                Caso seja privado, os membros do seu time só poderão te adicionar com compartilhamento do código.
+              </ErrorText>
+            )}
           </FullWidthGroup>
         </Row>
 

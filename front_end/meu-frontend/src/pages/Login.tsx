@@ -223,6 +223,8 @@ const Login = () => {
         cnpj: dados.usuario.cnpj ?? null,
         dataNascimento: dados.usuario.dataNascimento ?? null,
         dataCadastro: dados.usuario.dataCadastro ?? null,
+        tipoPerfil: dados.usuario.tipoPerfil ?? null,
+        codigo: dados.usuario.codigo ?? null,
       };
 
       login(dados.token, usuarioDados);

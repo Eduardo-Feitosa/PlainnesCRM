@@ -15,6 +15,8 @@ export interface UsuarioDados {
   cnpj?: string | null;
   dataNascimento?: string | null;
   dataCadastro?: string | null;
+  tipoPerfil?: 'publico' | 'privado' | null;
+  codigo?: number | null;
 }
 
 interface AuthContextData {
@@ -47,6 +49,8 @@ const STORAGE_KEYS = {
   cnpj: 'usuario_cnpj',
   dataNascimento: 'usuario_data_nascimento',
   dataCadastro: 'usuario_data_cadastro',
+  tipoPerfil: 'usuario_tipo_perfil',
+  codigo: 'usuario_codigo',
 };
 
 const salvarItem = (chave: string, valor?: string | null) =>
@@ -99,6 +103,8 @@ const restaurarUsuarioDoStorage = (): UsuarioDados | null =>
     cnpj: localStorage.getItem(STORAGE_KEYS.cnpj) || null,
     dataNascimento: localStorage.getItem(STORAGE_KEYS.dataNascimento) || null,
     dataCadastro: localStorage.getItem(STORAGE_KEYS.dataCadastro) || null,
+    tipoPerfil: (localStorage.getItem(STORAGE_KEYS.tipoPerfil) as 'publico' | 'privado' | null) || null,
+    codigo: localStorage.getItem(STORAGE_KEYS.codigo) ? Number(localStorage.getItem(STORAGE_KEYS.codigo)) : null,
   };
 };
 
@@ -138,6 +144,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     salvarItem(STORAGE_KEYS.cnpj, novoUsuario.cnpj);
     salvarItem(STORAGE_KEYS.dataNascimento, novoUsuario.dataNascimento);
     salvarItem(STORAGE_KEYS.dataCadastro, novoUsuario.dataCadastro);
+    salvarItem(STORAGE_KEYS.tipoPerfil, novoUsuario.tipoPerfil);
+    salvarItem(STORAGE_KEYS.codigo, novoUsuario.codigo ? String(novoUsuario.codigo) : null);
 
     setToken(novoToken);
     setUsuario(novoUsuario);
@@ -162,6 +170,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       salvarItem(STORAGE_KEYS.cnpj, mesclado.cnpj);
       salvarItem(STORAGE_KEYS.dataNascimento, mesclado.dataNascimento);
       salvarItem(STORAGE_KEYS.dataCadastro, mesclado.dataCadastro);
+      salvarItem(STORAGE_KEYS.tipoPerfil, mesclado.tipoPerfil);
+      salvarItem(STORAGE_KEYS.codigo, mesclado.codigo ? String(mesclado.codigo) : null);
 
       return mesclado;
     });

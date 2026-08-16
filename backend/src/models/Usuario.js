@@ -27,10 +27,10 @@ const modeloUsuario =
         },
 
         // Cria um novo usuário no banco de dados
-        criar: async (dados) => 
+        criar: async (dados) =>
         {
             // Extrai os campos enviados pelo frontend
-            const { nome, email, senha, tipo, telefone, setor, cpf, dataNascimento, funcao, cnpj } = dados;
+            const { nome, email, senha, tipo, tipoPerfil, telefone, setor, cpf, dataNascimento, funcao, cnpj, codigo, nomeUser } = dados;
             
             // Criptografa a senha antes de salvar (segurança)
             const senhaCriptografada = await bcrypt.hash(senha, 10);
@@ -44,12 +44,12 @@ const modeloUsuario =
             await conexao.query
             (
             `INSERT INTO Usuario 
-            (nome, email, senha, tipo, telefone, setor, cpf, dataNascimento, funcao, cnpj, role) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [nome, email, senhaCriptografada, tipo, telefone, setor, cpf 
+            (nome, email, senha, tipo, tipoPerfil, telefone, setor, cpf, dataNascimento, funcao, cnpj, role, codigo, nomeUser) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [nome, email, senhaCriptografada, tipo, tipoPerfil, telefone, setor, cpf 
                 || null, dataNascimento 
                 || null, funcao, cnpj 
-                || null, rolePadrao]
+                || null, rolePadrao, codigo, nomeUser]
             );
             
             return resultado.insertId; // Retorna o ID do novo usuário criado
@@ -70,6 +70,22 @@ const modeloUsuario =
 
             const [linhas] = await conexao.query(sql, params);
             return linhas.length > 0; // Se achou algum, retorna verdadeiro
+        },
+
+        // Verifica se um nome de usuário (username) já existe
+        nomeUserJaExiste: async (nomeUser, idExcluir = null) => 
+        {
+            let sql = 'SELECT id FROM Usuario WHERE nomeUser = ?';
+            const params = [nomeUser];
+
+            if (idExcluir)
+            {
+                sql += ' AND id <> ?';
+                params.push(idExcluir);
+            }
+
+            const [linhas] = await conexao.query(sql, params);
+            return linhas.length > 0;
         },
 
         // Verifica se um CPF já está cadastrado (apenas para Pessoa Física)
@@ -103,16 +119,27 @@ const modeloUsuario =
             return linhas.length > 0;
         },
 
+        // Verifica se um código de 5 dígitos já está cadastrado (para garantir unicidade)
+        codigoJaExiste: async (codigo) =>
+        {
+            const [linhas] = await conexao.query(
+                'SELECT id FROM Usuario WHERE codigo = ?',
+                [codigo]
+            );
+            return linhas.length > 0;
+        },
+
         // Atualiza os dados de perfil do usuário (sem mexer na senha)
         atualizarDados: async (id, dados) =>
         {
-            const { nome, email, tipo, telefone, setor, cpf, dataNascimento, funcao, cnpj } = dados;
+            const { nome, email, tipo, tipoPerfil, telefone, setor, cpf, dataNascimento, funcao, cnpj } = dados;
 
             const [resultado] = await conexao.query(
                 `UPDATE Usuario SET
                     nome = ?,
                     email = ?,
                     tipo = ?,
+                    tipoPerfil = ?,
                     telefone = ?,
                     setor = ?,
                     cpf = ?,
@@ -121,7 +148,7 @@ const modeloUsuario =
                     cnpj = ?
                 WHERE id = ?`,
                 [
-                    nome, email, tipo, telefone, setor,
+                    nome, email, tipo, tipoPerfil, telefone, setor,
                     cpf || null, dataNascimento || null, funcao, cnpj || null,
                     id
                 ]

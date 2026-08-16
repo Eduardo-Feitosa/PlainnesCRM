@@ -104,7 +104,7 @@ const Brand = styled.div`
 `;
 
 const BrandText = styled.div`
-  font-size: 1.15rem;
+  font-size: calc(1.15rem + 2px);
   font-weight: 800;
   color: #fff;
   font-family: 'Inter', sans-serif;
@@ -124,12 +124,12 @@ const UserSection = styled.div`
 `;
 
 const Avatar = styled.span<{ $bg?: string }>`
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   border-radius: 999px;
   background-color: ${({ $bg }) => $bg || 'var(--pl-blue)'};
   color: #fff;
-  font-size: 0.8rem;
+  font-size: calc(0.8rem + 2px);
   font-weight: 700;
   display: flex;
   align-items: center;
@@ -147,18 +147,32 @@ const UserInfo = styled.div`
 const UserName = styled.div`
   font-weight: 600;
   color: #fff;
-  font-size: 0.9rem;
+  font-size: calc(0.9rem + 2px);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 `;
 
 const UserRole = styled.div`
-  font-size: 0.75rem;
+  font-size: calc(0.75rem + 2px);
   color: rgba(255, 255, 255, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+`;
+
+const UserCode = styled.div`
+  font-size: calc(0.7rem + 2px);
+  color: rgba(255, 255, 255, 0.5);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: 'Inter', sans-serif;
+
+  strong {
+    color: #fff;
+  }
 `;
 
 const NavSection = styled.div`
@@ -317,6 +331,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onNavigate }) => {
           <UserInfo>
             <UserName>{usuario.nome}</UserName>
             <UserRole>{usuario.funcao || 'Usuário'}</UserRole>
+            {usuario.codigo && (
+              <UserCode>Código: <strong>{usuario.codigo}</strong></UserCode>
+            )}
           </UserInfo>
         </UserSection>
       )}
