@@ -4,8 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import notificacaoIcon from '../../assets/notificacaoIcon.png';
 import { listarConvitesPendentes, responderConvite } from '../../services/equipes';
 import { listarNotificacoes, contarNotificacoesNaoLidas, marcarNotificacaoComoLida } from '../../services/notificacoes';
+import { listarSolicitacoesPendentes, responderSolicitacao } from '../../services/colaboradores';
 import type { ConviteEquipe } from '../../types/equipe';
 import type { Notificacao } from '../../types/notificacao';
+import type { SolicitacaoColaborador } from '../../types/colaborador';
 
 // ============================================
 // STYLED COMPONENTS
@@ -218,19 +220,22 @@ export const NotificationBell: React.FC = () =>
     const [open, setOpen] = useState(false);
     const [contagem, setContagem] = useState(0);
     const [convites, setConvites] = useState<ConviteEquipe[]>([]);
+    const [solicitacoes, setSolicitacoes] = useState<SolicitacaoColaborador[]>([]);
     const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
     const [carregando, setCarregando] = useState(false);
     const [respondendoId, setRespondendoId] = useState<number | null>(null);
+    const [respondendoColabId, setRespondendoColabId] = useState<number | null>(null);
 
     const atualizarContagem = useCallback(async () =>
     {
         try
         {
-            const [conv, naoLidas] = await Promise.all([
+            const [conv, colab, naoLidas] = await Promise.all([
                 listarConvitesPendentes().catch(() => []),
+                listarSolicitacoesPendentes().catch(() => []),
                 contarNotificacoesNaoLidas().catch(() => 0),
             ]);
-            setContagem(conv.length + naoLidas);
+            setContagem(conv.length + colab.length + naoLidas);
         }
         catch
         {
@@ -258,11 +263,13 @@ export const NotificationBell: React.FC = () =>
         setCarregando(true);
         try
         {
-            const [conv, notifs] = await Promise.all([
+            const [conv, colab, notifs] = await Promise.all([
                 listarConvitesPendentes().catch(() => []),
+                listarSolicitacoesPendentes().catch(() => []),
                 listarNotificacoes().catch(() => []),
             ]);
             setConvites(conv);
+            setSolicitacoes(colab);
             setNotificacoes(notifs);
         }
         finally
@@ -297,6 +304,25 @@ export const NotificationBell: React.FC = () =>
         }
     };
 
+    const handleResponderColaborador = async (solicitacao: SolicitacaoColaborador, aceitar: boolean) =>
+    {
+        setRespondendoColabId(solicitacao.id);
+        try
+        {
+            await responderSolicitacao(solicitacao.id, aceitar);
+            setSolicitacoes((prev) => prev.filter((s) => s.id !== solicitacao.id));
+            await atualizarContagem();
+        }
+        catch (err)
+        {
+            console.error(err);
+        }
+        finally
+        {
+            setRespondendoColabId(null);
+        }
+    };
+
     const handleClickNotificacao = async (n: Notificacao) =>
     {
         if (!n.lida)
@@ -312,7 +338,7 @@ export const NotificationBell: React.FC = () =>
         }
     };
 
-    const semNada = !carregando && convites.length === 0 && notificacoes.length === 0;
+    const semNada = !carregando && convites.length === 0 && solicitacoes.length === 0 && notificacoes.length === 0;
 
     return (
         <Wrapper ref={wrapperRef}>
@@ -357,6 +383,36 @@ export const NotificationBell: React.FC = () =>
                                                     type="button"
                                                     disabled={respondendoId === c.equipeId}
                                                     onClick={() => handleResponder(c, false)}
+                                                >
+                                                    Recusar
+                                                </BotaoRecusar>
+                                            </ConviteBotoes>
+                                        </ConviteItem>
+                                    ))}
+                                </>
+                            )}
+
+                            {solicitacoes.length > 0 && (
+                                <>
+                                    <SectionLabel>Solicitações de colaboração</SectionLabel>
+                                    {solicitacoes.map((s) => (
+                                        <ConviteItem key={s.id}>
+                                            <ConviteTexto>
+                                                <strong>{s.solicitanteNome}</strong> quer se conectar com você
+                                                {s.solicitanteNomeUser ? <> (@{s.solicitanteNomeUser})</> : s.solicitanteCodigo ? <> (código {s.solicitanteCodigo})</> : null}.
+                                            </ConviteTexto>
+                                            <ConviteBotoes>
+                                                <BotaoAceitar
+                                                    type="button"
+                                                    disabled={respondendoColabId === s.id}
+                                                    onClick={() => handleResponderColaborador(s, true)}
+                                                >
+                                                    Aceitar
+                                                </BotaoAceitar>
+                                                <BotaoRecusar
+                                                    type="button"
+                                                    disabled={respondendoColabId === s.id}
+                                                    onClick={() => handleResponderColaborador(s, false)}
                                                 >
                                                     Recusar
                                                 </BotaoRecusar>

@@ -12,6 +12,7 @@ const rotasVendas = require('./src/routes/vendas.routes');
 const rotasDashboard = require('./src/routes/dashboard.routes');
 const rotasEquipes = require('./src/routes/equipes.routes');
 const rotasNotificacoes = require('./src/routes/notificacoes.routes');
+const rotasColaboradores = require('./src/routes/colaboradores.routes');
 
 const app = express();
 
@@ -29,6 +30,7 @@ app.use('/api/vendas', rotasVendas);
 app.use('/api/dashboard', rotasDashboard);
 app.use('/api/equipes', rotasEquipes);
 app.use('/api/notificacoes', rotasNotificacoes);
+app.use('/api/colaboradores', rotasColaboradores);
 
 // 3. ROTAS DE TESTE
 app.get('/api/plainness', (req, res) => {

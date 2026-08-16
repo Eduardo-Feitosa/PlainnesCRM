@@ -3,8 +3,8 @@ import { Outlet, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Sidebar } from './Sidebar';
 import { NotificationBell } from './NotificationBell';
+import { HeaderUserSearch } from './HeaderUserSearch';
 import { useAuth } from '../../contexts/AuthContext';
-import searchIcon from '../../assets/search.png';
 import settingsIcon from '../../assets/settingsIcon.png';
 import logoutIcon from '../../assets/logoutIcon.png';
 
@@ -65,41 +65,6 @@ const MenuButton = styled.button`
   &:hover {
     background-color: var(--pl-blue-soft);
   }
-`;
-
-const SearchWrapper = styled.div`
-  flex: 1;
-  max-width: 500px;
-  position: relative;
-`;
-
-const SearchInput = styled.input`
-  width: 100%;
-  padding: 0.6rem 1rem 0.6rem 2.5rem;
-  border: 1px solid var(--pl-line);
-  border-radius: 0.75rem;
-  background-color: #f7f7fc;
-  font-size: 0.925rem;
-  font-family: 'Inter', sans-serif;
-  color: var(--pl-navy);
-  outline: none;
-  transition: all 0.15s ease;
-
-  &:focus {
-    background-color: #fff;
-    border-color: var(--pl-blue);
-    box-shadow: 0 0 0 0.2rem rgba(59, 46, 232, 0.14);
-  }
-`;
-
-const SearchIcon = styled.img`
-  position: absolute;
-  left: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 18px;
-  height: 18px;
-  opacity: 0.6;
 `;
 
 const TopbarRight = styled.div`
@@ -299,10 +264,7 @@ export const AppLayout: React.FC = () => {
             </svg>
           </MenuButton>
 
-          <SearchWrapper>
-            <SearchIcon src={searchIcon} alt="Buscar" />
-            <SearchInput type="text" placeholder="Buscar clientes, produtos, vendas..." aria-label="Buscar" />
-          </SearchWrapper>
+          <HeaderUserSearch />
 
           <TopbarRight>
             <NotificationBell />
