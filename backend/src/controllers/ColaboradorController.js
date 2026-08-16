@@ -206,4 +206,43 @@ const responder = async (req, res) =>
     }
 };
 
-module.exports = { buscarUsuarios, solicitar, listarPendentes, responder };
+// ============================================
+// 5. LISTAR MEUS COLABORADORES (aba Colaboradores)
+// ============================================
+const listarColaboradores = async (req, res) =>
+{
+    try
+    {
+        const colaboradores = await modeloColaborador.listarAceitos(req.usuario.id);
+        return res.json(colaboradores);
+    }
+    catch (error)
+    {
+        console.error('❌ listar colaboradores:', error);
+        return res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
+
+// ============================================
+// 6. REMOVER COLABORADOR (desfaz o relacionamento pros dois lados)
+// ============================================
+const remover = async (req, res) =>
+{
+    try
+    {
+        const id = Number(req.params.id);
+        if (!Number.isFinite(id) || id <= 0) return res.status(400).json({ erro: 'ID de colaborador inválido' });
+
+        const removeu = await modeloColaborador.remover(id, req.usuario.id);
+        if (!removeu) return res.status(404).json({ erro: 'Colaborador não encontrado.' });
+
+        return res.json({ mensagem: 'Colaborador removido com sucesso.' });
+    }
+    catch (error)
+    {
+        console.error('❌ remover colaborador:', error);
+        return res.status(500).json({ erro: 'Erro interno do servidor' });
+    }
+};
+
+module.exports = { buscarUsuarios, solicitar, listarPendentes, responder, listarColaboradores, remover };

@@ -89,6 +89,34 @@ const modeloColaborador =
         }
         return ids;
     },
+
+    // Lista os colaboradores ACEITOS do usuário logado — a relação é
+    // simétrica depois de aceita, então busca o "outro lado" independente
+    // de quem foi o solicitante original
+    listarAceitos: async (usuarioId) =>
+    {
+        const [linhas] = await conexao.query(
+            `SELECT c.id, c.dataResposta AS dataColaboracao,
+                    u.id AS colaboradorUsuarioId, u.nome, u.nomeUser, u.codigo, u.funcao
+             FROM colaborador c
+             INNER JOIN usuario u ON u.id = IF(c.usuarioId = ?, c.colaboradorId, c.usuarioId)
+             WHERE (c.usuarioId = ? OR c.colaboradorId = ?) AND c.status = 'aceito'
+             ORDER BY u.nome ASC`,
+            [usuarioId, usuarioId, usuarioId]
+        );
+        return linhas;
+    },
+
+    // Desfaz uma colaboração já aceita — qualquer um dos dois lados pode remover
+    remover: async (id, usuarioId) =>
+    {
+        const [resultado] = await conexao.query(
+            `DELETE FROM colaborador
+             WHERE id = ? AND (usuarioId = ? OR colaboradorId = ?) AND status = 'aceito'`,
+            [id, usuarioId, usuarioId]
+        );
+        return resultado.affectedRows > 0;
+    },
 };
 
 module.exports = modeloColaborador;

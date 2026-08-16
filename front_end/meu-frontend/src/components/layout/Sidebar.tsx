@@ -5,7 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import iconVendas from '../../assets/iconVendas.png';
 import productIcon from '../../assets/productIcon.png';
 
-type IconKey = 'dash' | 'clients' | 'task' | 'tarefas' | 'equipes' | 'relatory' | 'settings' | 'logout';
+type IconKey = 'dash' | 'clients' | 'task' | 'tarefas' | 'equipes' | 'colaboradores' | 'relatory' | 'settings' | 'logout';
 
 const ICON_COLOR_DEFAULT = 'currentColor';
 
@@ -51,6 +51,13 @@ const iconSvgs: Record<IconKey, React.ReactNode> = {
       <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
       <path d="M16 3.13a4 4 0 0 1 0 7.75" />
       <circle cx="18" cy="13" r="3" />
+    </svg>
+  ),
+  colaboradores: (
+    <svg viewBox="0 0 24 24" fill="none" stroke={ICON_COLOR_DEFAULT} strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="9" cy="8" r="4" />
+      <path d="M2 21v-2a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v2" />
+      <path d="M17 11l2 2 4-4" />
     </svg>
   ),
   relatory: (
@@ -363,6 +370,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onNavigate }) => {
         <NavLinkStyled to="/equipes" onClick={onNavigate}>
           <NavSvg>{iconSvgs.equipes}</NavSvg>
           Equipes
+        </NavLinkStyled>
+        <NavLinkStyled to="/colaboradores" onClick={onNavigate}>
+          <NavSvg>{iconSvgs.colaboradores}</NavSvg>
+          Colaboradores
         </NavLinkStyled>
         <NavLinkStyled to="/relatorios" onClick={onNavigate}>
           <NavSvg>{iconSvgs.relatory}</NavSvg>

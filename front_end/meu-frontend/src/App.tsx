@@ -8,6 +8,7 @@ import Vendas from './pages/Vendas';
 import Relatorios from './pages/Relatorios';
 import Tarefas from './pages/Tarefas';
 import Equipes from './pages/Equipes';
+import Colaboradores from './pages/Colaboradores';
 import Configuracoes from './pages/Configuracoes';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
@@ -38,6 +39,7 @@ function App() {
             <Route path="/vendas" element={<Vendas />} />
             <Route path="/tarefas" element={<Tarefas />} />
             <Route path="/equipes" element={<Equipes />} />
+            <Route path="/colaboradores" element={<Colaboradores />} />
             <Route path="/relatorios" element={<Relatorios />} />
             <Route path="/configuracoes" element={<Configuracoes />} />
           </Route>

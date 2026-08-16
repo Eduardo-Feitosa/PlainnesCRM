@@ -1,6 +1,6 @@
 import { API_URL } from '../config/api';
 import type { ErroApi } from './vendas';
-import type { UsuarioBusca, SolicitacaoColaborador } from '../types/colaborador';
+import type { UsuarioBusca, SolicitacaoColaborador, ColaboradorAceito } from '../types/colaborador';
 
 const token = () => localStorage.getItem('token');
 const headers = (bodyJson = true): Record<string, string> =>
@@ -46,5 +46,21 @@ export const responderSolicitacao = async (id: number, aceitar: boolean): Promis
     });
     if (r.status === 401) { const j: ErroApi = await r.json().catch(() => ({})); return Promise.reject(j); }
     if (!r.ok) { const j: ErroApi = await r.json().catch(() => ({ erro: 'Falha ao responder solicitação.' })); return Promise.reject(j); }
+    return r.json() as Promise<{ mensagem?: string }>;
+};
+
+export const listarColaboradores = async (): Promise<ColaboradorAceito[]> =>
+{
+    const r = await fetch(`${API_URL}/colaboradores`, { headers: headers(false) });
+    if (r.status === 401) { const j: ErroApi = await r.json().catch(() => ({})); return Promise.reject(j); }
+    if (!r.ok) { const j: ErroApi = await r.json().catch(() => ({ erro: 'Falha ao listar colaboradores.' })); return Promise.reject(j); }
+    return r.json() as Promise<ColaboradorAceito[]>;
+};
+
+export const removerColaborador = async (id: number): Promise<{ mensagem?: string }> =>
+{
+    const r = await fetch(`${API_URL}/colaboradores/${id}`, { method: 'DELETE', headers: headers(false) });
+    if (r.status === 401) { const j: ErroApi = await r.json().catch(() => ({})); return Promise.reject(j); }
+    if (!r.ok) { const j: ErroApi = await r.json().catch(() => ({ erro: 'Falha ao remover colaborador.' })); return Promise.reject(j); }
     return r.json() as Promise<{ mensagem?: string }>;
 };

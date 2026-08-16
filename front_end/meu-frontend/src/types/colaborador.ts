@@ -11,3 +11,14 @@ export interface SolicitacaoColaborador
     solicitanteCodigo: number | null;
     dataSolicitacao: string;
 }
+
+export interface ColaboradorAceito
+{
+    id: number;
+    colaboradorUsuarioId: number;
+    nome: string;
+    nomeUser: string | null;
+    codigo: number | null;
+    funcao: string | null;
+    dataColaboracao: string;
+}
