@@ -2,11 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { Sidebar } from './Sidebar';
+import { NotificationBell } from './NotificationBell';
 import { useAuth } from '../../contexts/AuthContext';
 import searchIcon from '../../assets/search.png';
 import settingsIcon from '../../assets/settingsIcon.png';
 import logoutIcon from '../../assets/logoutIcon.png';
-import notificacaoIcon from '../../assets/notificacaoIcon.png';
 
 // ============================================
 // STYLED COMPONENTS
@@ -139,59 +139,6 @@ const Avatar = styled.span<{ $bg?: string }>`
   font-family: 'Inter', sans-serif;
 `;
 
-const NotificationButton = styled.button`
-  width: 46px;
-  height: 46px;
-  border-radius: 999px;
-  background-color: transparent;
-  color: var(--pl-navy);
-  border: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
-  font-family: 'Inter', sans-serif;
-
-  &:hover,
-  &:focus-visible {
-    background-color: var(--pl-blue-soft);
-    color: var(--pl-navy);
-    outline: none;
-  }
-
-  > span {
-    width: 34px;
-    height: 34px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  img {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-    display: block;
-    image-rendering: auto;
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    opacity: 0.78;
-    transition: filter 0.15s ease, opacity 0.15s ease, transform 0.15s ease;
-    filter: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg"><filter id="s"><feGaussianBlur stdDeviation="0.2"/><feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1.05 0"/></filter></svg>#s');
-  }
-
-  &:hover img,
-  &:focus-visible img {
-    opacity: 1;
-  }
-`;
-
 const Username = styled.span`
   font-weight: 600;
   font-size: 0.9rem;
@@ -321,10 +268,6 @@ export const AppLayout: React.FC = () => {
     navigate('/configuracoes');
   };
 
-  const handleClickNotificacao = () => {
-    console.log('[AppLayout Topbar] Botão notificações clicado (frontend apenas, sem backend ainda)');
-  };
-
   const isMobileOpen = !collapsed && typeof window !== 'undefined' && window.innerWidth < 992;
 
   return (
@@ -362,14 +305,7 @@ export const AppLayout: React.FC = () => {
           </SearchWrapper>
 
           <TopbarRight>
-            <NotificationButton
-              type="button"
-              aria-label="Notificações"
-              title="Notificações"
-              onClick={handleClickNotificacao}
-            >
-              <span><img src={notificacaoIcon} alt="" aria-hidden="true" /></span>
-            </NotificationButton>
+            <NotificationBell />
             <UserTrigger
               ref={userMenuRef}
               onClick={() => setUserMenuOpen((v) => !v)}

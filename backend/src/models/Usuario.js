@@ -171,10 +171,47 @@ const modeloUsuario =
         },
 
         // Compara a senha digitada com a senha criptografada salva no banco
-        compararSenha: async (senhaDigitada, senhaSalva) => 
+        compararSenha: async (senhaDigitada, senhaSalva) =>
         {
             return await bcrypt.compare(senhaDigitada, senhaSalva);
-        }
+        },
+
+        // Busca candidatos a convite de equipe (regra de privacidade):
+        // - por código (5 dígitos): acha o usuário INDEPENDENTE do tipoPerfil
+        //   (o código é o mecanismo de descoberta explícito para perfil privado)
+        // - por nomeUser: só acha usuários com tipoPerfil = 'publico'
+        // Sempre exclui o próprio usuário logado.
+        buscarParaConvite: async (termo, usuarioIdLogado) =>
+        {
+            const termoLimpo = (termo == null ? '' : String(termo)).trim();
+            if (!termoLimpo) return [];
+
+            const codigoNumerico = /^\d{1,10}$/.test(termoLimpo) ? Number(termoLimpo) : null;
+
+            const [linhas] = await conexao.query(
+                `SELECT id, nome, nomeUser, codigo, funcao, tipoPerfil
+                 FROM Usuario
+                 WHERE id <> ?
+                   AND (
+                        codigo = ?
+                        OR (tipoPerfil = 'publico' AND nomeUser LIKE ?)
+                   )
+                 LIMIT 10`,
+                [usuarioIdLogado, codigoNumerico, `%${termoLimpo}%`]
+            );
+            return linhas;
+        },
+
+        // Busca usuário só por código exato (independe de tipoPerfil) — usado
+        // para validar o alvo de um convite antes de inserir em equipemembro.
+        buscarPorCodigo: async (codigo) =>
+        {
+            const [linhas] = await conexao.query(
+                'SELECT id, nome, nomeUser, codigo, funcao, tipoPerfil FROM Usuario WHERE codigo = ?',
+                [codigo]
+            );
+            return linhas[0];
+        },
 
 };
 
