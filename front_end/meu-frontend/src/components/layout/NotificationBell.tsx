@@ -248,6 +248,16 @@ export const NotificationBell: React.FC = () =>
         atualizarContagem();
     }, [atualizarContagem]);
 
+    // Retry leve: se a contagem inicial falhar silenciosamente (rede instável,
+    // backend reiniciando, etc.) ou uma notificação nova chegar enquanto o
+    // usuário está parado numa página, o badge se autocorrige sozinho em vez
+    // de ficar preso até a próxima ação de aceitar/recusar.
+    useEffect(() =>
+    {
+        const intervalo = setInterval(() => { atualizarContagem(); }, 45000);
+        return () => clearInterval(intervalo);
+    }, [atualizarContagem]);
+
     useEffect(() =>
     {
         const handleClickOutside = (e: MouseEvent) =>
@@ -282,7 +292,14 @@ export const NotificationBell: React.FC = () =>
     {
         const proximo = !open;
         setOpen(proximo);
-        if (proximo) carregarLista();
+        if (proximo)
+        {
+            // Recarrega lista E contagem juntas — antes só a lista era buscada
+            // aqui, então o número do badge podia ficar sem bater com o
+            // conteúdo real do painel até alguém aceitar/recusar algo.
+            carregarLista();
+            atualizarContagem();
+        }
     };
 
     const handleResponder = async (convite: ConviteEquipe, aceitar: boolean) =>
